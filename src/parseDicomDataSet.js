@@ -70,7 +70,7 @@ var dicomParser = (function (dicomParser)
 
         while(byteStream.position < maxPosition)
         {
-            var element = dicomParser.readDicomElementImplicit(byteStream, options.untilTag, options.vrCallback, options.exclude);
+            var element = dicomParser.readDicomElementImplicit(byteStream, options);
             if (element === false) {
                 return;
             }

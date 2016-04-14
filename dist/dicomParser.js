@@ -1758,7 +1758,7 @@ var dicomParser = (function (dicomParser)
 
         while(byteStream.position < maxPosition)
         {
-            var element = dicomParser.readDicomElementImplicit(byteStream, options.untilTag, options.vrCallback, options.exclude);
+            var element = dicomParser.readDicomElementImplicit(byteStream, options);
             if (element === false) {
                 return;
             }
@@ -1915,17 +1915,36 @@ var dicomParser = (function (dicomParser)
         return false;
     }
 
-    dicomParser.readDicomElementImplicit = function(byteStream, untilTag, vrCallback, exclude)
+    dicomParser.readDicomElementImplicit = function(byteStream, options)
     {
+        options = options || {};
+        var untilTag = options.untilTag;
+        var untilGroup = options.untilGroup;
+        var exclude = options.exclude;
+        var vrCallback = options.vrCallback;
+
         if(byteStream === undefined)
         {
             throw "dicomParser.readDicomElementImplicit: missing required parameter 'byteStream'";
         }
 
+        // untilTag + exclude
         var tag = dicomParser.readTag(byteStream);
         if (tag === untilTag && exclude) {
             return false;
         }
+
+        // untilGroup + exclude
+        var group = parseInt("0" + tag.substring(0, 5));
+        untilGroup = untilGroup ? parseInt("0x" + untilGroup) : untilGroup;
+        if (untilGroup && group && exclude && group >= untilGroup) {
+            return false;
+        }
+        // untilGroup
+        if (untilGroup && group && group > untilGroup) {
+            return false;
+        }
+
         var element = {
             tag : tag,
             length: byteStream.readUint32(),
@@ -2162,7 +2181,7 @@ var dicomParser = (function (dicomParser)
 
         while(byteStream.position < byteStream.byteArray.length)
         {
-            var element = dicomParser.readDicomElementImplicit(byteStream, undefined, vrCallback);
+            var element = dicomParser.readDicomElementImplicit(byteStream, {'vrCallback': vrCallback});
             elements[element.tag] = element;
 
             // we hit an item delimiter tag, return the current offset to mark
@@ -2190,7 +2209,7 @@ var dicomParser = (function (dicomParser)
         else
         {
             item.dataSet = new dicomParser.DataSet(byteStream.byteArrayParser, byteStream.byteArray, {});
-            dicomParser.parseDicomDataSetImplicit(item.dataSet, byteStream, byteStream.position + item.length, {vrCallback: vrCallback});
+            dicomParser.parseDicomDataSetImplicit(item.dataSet, byteStream, byteStream.position + item.length, {'vrCallback': vrCallback});
         }
         return item;
     }
@@ -2257,6 +2276,7 @@ var dicomParser = (function (dicomParser)
 
     return dicomParser;
 }(dicomParser));
+
 /**
  * Internal helper functions for parsing DICOM elements
  */

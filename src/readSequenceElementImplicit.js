@@ -17,7 +17,7 @@ var dicomParser = (function (dicomParser)
 
         while(byteStream.position < byteStream.byteArray.length)
         {
-            var element = dicomParser.readDicomElementImplicit(byteStream, undefined, vrCallback);
+            var element = dicomParser.readDicomElementImplicit(byteStream, {'vrCallback': vrCallback});
             elements[element.tag] = element;
 
             // we hit an item delimiter tag, return the current offset to mark
@@ -45,7 +45,7 @@ var dicomParser = (function (dicomParser)
         else
         {
             item.dataSet = new dicomParser.DataSet(byteStream.byteArrayParser, byteStream.byteArray, {});
-            dicomParser.parseDicomDataSetImplicit(item.dataSet, byteStream, byteStream.position + item.length, {vrCallback: vrCallback});
+            dicomParser.parseDicomDataSetImplicit(item.dataSet, byteStream, byteStream.position + item.length, {'vrCallback': vrCallback});
         }
         return item;
     }
